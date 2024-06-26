@@ -6,25 +6,60 @@ on:
   push:
     branches:
       - main
-defaults:
-  run:
-    working-directory: ./front
 jobs:
-  Deploy-Production:
+  # deploy-on-vercel:
+  #   name: Deploy on Vercel using Vercel CLI (not using Docker image)
+  #   runs-on: ubuntu-latest
+  # defaults:
+  #   run:
+  #     working-directory: ./front
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: "18.17"
+  #     - name: Install pnpm
+  #       run: npm install -g pnpm
+  #     - name: Install Vercel CLI
+  #       run: npm install --global vercel@latest
+  #     - name: Pull Vercel Environment Information
+  #       run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+  #     - name: Build Project Artifacts
+  #       run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+  #     - name: Deploy Project Artifacts to Vercel
+  #       run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  deploy-on-heroku:
+    name: Deploy on Heroku using Heroku CLI (using Docker image)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./front
     steps:
       - uses: actions/checkout@v2
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Heroku Container Registry
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: echo $HEROKU_API_KEY | docker login --username=_ --password-stdin registry.heroku.com
+        working-directory: ./front
+
+      - name: Build Docker image
+        run: docker build -t registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web .
+        working-directory: ./front
+
+      - name: Push Docker image to Heroku
+        run: docker push registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web
+        working-directory: ./front
+
+      - name: Install Heroku CLI
+        uses: heroku/actions/setup@v1
         with:
-          node-version: "18.17"
-      - name: Install pnpm
-        run: npm install -g pnpm
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Build Project Artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Release to Heroku
+        run: heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
+        working-directory: ./front
