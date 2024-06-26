@@ -15,7 +15,7 @@ export default function Home() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Deployed via CD 🚀
+            Deployed via amazing CD 🚀
           </a>
         </div>
       </div>
