@@ -15,15 +15,7 @@ export default function Home() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            CC By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
+            Deployed via CD 🚀
           </a>
         </div>
       </div>
